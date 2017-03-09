@@ -6,4 +6,14 @@ DavedMD chatbot logic engine parses inputs and responds accordingly
 * If the bot gets exhausted of responses, it will "refer you to another professional" aka restart the bot (possibly with a different name)
 '''
 
+import random
+import re #regex
 
+class Magpy:
+
+    def parse_response(string):
+        ''' 
+        
+        '''
+
+    def answer_symptoms(string)
