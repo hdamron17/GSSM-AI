@@ -39,12 +39,32 @@ class Magpy:
         '''
         return "Hi"
 
+    def produce_question(self):
+        ''' 
+        Gathers a random set of symptoms and asks about the user's experience in the past time_scale
+
+        :return: Return the string asking about symptoms
+        '''
+        possible_symptoms = set(self.synonyms.keys()) - self.symptoms #symptoms not yet acknowledged
+        if len(possible_symptoms) > 0:
+            
+
     def time_up(self):
+        ''' 
+        Increases the time scale if possible and returns whether or not it was updated
+
+        :return: return True if the time_scale was edited else False
+        '''
         time_scales = ("few hours", "day", "3 days", "week", "fortnight", "month",
             "3 months", "6 months", "year", "Mayan B'ak'tun", "2 years", "5 years", "decade", "lifetime", "century",
             "millennium", "Mayan Piktun", "Mayan Kalabtun", "Megaannus", "Mayan K'inchiltun",
             "Mayan Alautun", "epoch", "eon", "forever")
-        self.time_scale = time_scales[time_scales.index(self.time_scale) + 1]
+        new_index = time_scales.index(self.time_scale) + 1
+        if new_index >= len(time_scales):
+            return False
+        else:
+            self.time_scale = time_scales[new_index]
+            return True
 
     def parse_response(self, input):
         ''' 
@@ -54,7 +74,7 @@ class Magpy:
         :return: Returns the bot's response
         '''
         self.extract_symptoms(input) #extracts symptoms from the user respons
-        self.time_up() #increase time scale to prevent issues of asking the same thing twice
+        request_restart = not self.time_up() #increase time scale to prevent issues of asking the same thing twice #TODO if we're at forever, then this will fail
         self.extract_diagnoses() #see if there are any new diagnoses
         #TODO put all the functions together
 
@@ -67,15 +87,15 @@ class Magpy:
         Uses time_scale to ask about the user's history in that time
         * i.e. "You have a cold. Have you also had sneezing, coughing, or happiness in the past century?"
         '''
-        pass
+        pass #TODO
 
-    def extract_symptoms(self, input):
+    def extract_symptoms(self, symptom_list):
         ''' 
         Finds all symptoms found in the input string and adds them to the object list
 
         :param input: user input to be parsed
         '''
-        self.symptoms.update(symptom_list) #adds symptoms to the list
+        #self.symptoms.update(symptom_list) #adds symptoms to the list
         for word, values in self.synonyms.items():
             regex_search = re.search(r"(%s|%s)" % (word, "|".join(values)), input)
             if regex_search:
