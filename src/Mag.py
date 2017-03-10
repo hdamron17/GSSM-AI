@@ -37,7 +37,7 @@ class Magpy:
 
         :return: Returns the bot's first message
         '''
-        pass #TODO
+        return "Hi"
 
     def produce_question(self):
         ''' 
@@ -74,9 +74,9 @@ class Magpy:
         :param input: user input string
         :return: Returns the bot's response
         '''
-        extract_symptoms(input) #extracts symptoms from the user respons
-        request_restart = not time_up() #increase time scale to prevent issues of asking the same thing twice #TODO if we're at forever, then this will fail
-        extract_diagnoses() #see if there are any new diagnoses
+        self.extract_symptoms(input) #extracts symptoms from the user respons
+        request_restart = not self.time_up() #increase time scale to prevent issues of asking the same thing twice #TODO if we're at forever, then this will fail
+        self.extract_diagnoses() #see if there are any new diagnoses
         #TODO put all the functions together
 
     def produce_response(self):
