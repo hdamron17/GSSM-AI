@@ -48,6 +48,7 @@ class Magpy:
         possible_symptoms = set(self.synonyms.keys()) - self.symptoms #symptoms not yet acknowledged
         if len(possible_symptoms) > 0:
             
+        
 
     def time_up(self):
         ''' 
