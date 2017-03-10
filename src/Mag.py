@@ -31,6 +31,14 @@ class Magpy:
         self.symptoms_asked = set() #set of symptoms asked about so far
         self.time_scale = "few hours" #time used when asking about your symptoms (increases with time_up())
 
+    def greeting(self):
+        ''' 
+        Gets welcome message (brief introduction then asks about symptoms)
+
+        :return: Returns the bot's first message
+        '''
+        pass #TODO
+
     def time_up(self):
         time_scales = ("few hours", "day", "3 days", "week", "fortnight", "month",
             "3 months", "6 months", "year", "Mayan B'ak'tun", "2 years", "5 years", "decade", "lifetime", "century",
@@ -45,7 +53,7 @@ class Magpy:
         :param input: user input string
         :return: Returns the bot's response
         '''
-        pass
+        pass #TODO
 
     def answer_symptoms(self, input):
         ''' 
@@ -54,7 +62,7 @@ class Magpy:
         :param input: user input string
         :return: Returns response (either diagnosis or question about more symptoms
         '''
-        pass
+        pass #TODO
 
     def add_diagnosis(self, diagnosis):
         ''' 
