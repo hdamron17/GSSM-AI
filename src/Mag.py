@@ -20,12 +20,12 @@ class Magpy:
 
         #disease dictionary with name mapped to symptoms
         self.diseases = {
-            "common cold" : ("sneezing", "coughing")
+            "common cold" : {"sneezing", "coughing"}
         }
 
         #symptoms dictionary with implemented name mapped to other forms of the word
         self.synonyms = {
-            "sneezing" : ("sneez", "achoo")
+            "sneezing" : {"sneez", "achoo"}
         }
 
         self.symptoms_asked = set() #set of symptoms asked about so far
@@ -53,16 +53,47 @@ class Magpy:
         :param input: user input string
         :return: Returns the bot's response
         '''
-        pass #TODO
+        extract_symptoms(input) #extracts symptoms from the user respons
+        time_up() #increase time scale to prevent issues of asking the same thing twice
+        extract_diagnoses() #see if there are any new diagnoses
+        #TODO put all the functions together
 
-    def answer_symptoms(self, input):
+    def produce_response(self):
         ''' 
-        Used for when user responds to questions about their symptoms
+        Produces a bot response based on current bot state
 
-        :param input: user input string
-        :return: Returns response (either diagnosis or question about more symptoms
+        Uses the get_new_diagnoses() to form a response telling of those diagnoses
+        Uses all symptoms - acknowledged symptoms to ask about other symptoms
+        Uses time_scale to ask about the user's history in that time
+        * i.e. "You have a cold. Have you also had sneezing, coughing, or happiness in the past century?"
         '''
-        pass #TODO
+        pass
+
+    def extract_symptoms(self, input):
+        ''' 
+        Finds all symptoms found in the input string and adds them to the object list
+
+        :param input: user input to be parsed
+        '''
+        self.symptoms.update(symptom_list) #adds symptoms to the list
+        for word, values in self.synonyms.items():
+            regex_search = re.search(r"(%s|%s)" % (word, "|".join(values)), input)
+            if regex_search:
+                self.symptoms.add(word)
+
+    def extract_new_diagnoses(self, threshold=0.5):
+        ''' 
+        Finds all diagnoses not yet assigned based on current symptoms
+
+        :param threshold: Percent [0,1) of symptoms required for diagnosis
+        '''
+        for possible_diagnosis in set(self.diseases.keys()) - self.diagnoses:
+            #iterates over all diseases in the diseases keys but not diagnoses list
+            total_symptoms = self.diseases[possible_diagnoses]
+            total_symptoms_count = len(total_symptoms)
+            current_symptoms_count = len(total_symptoms - self.symptoms)
+            if current_symptoms_count / total_symptoms_count > threshold:
+                add_diagnosis(possible_diagnosis)
 
     def add_diagnosis(self, diagnosis):
         ''' 
