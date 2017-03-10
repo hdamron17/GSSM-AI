@@ -37,7 +37,7 @@ class Magpy:
 
         :return: Returns the bot's first message
         '''
-        pass #TODO
+        return "Hi"
 
     def time_up(self):
         time_scales = ("few hours", "day", "3 days", "week", "fortnight", "month",
@@ -53,9 +53,9 @@ class Magpy:
         :param input: user input string
         :return: Returns the bot's response
         '''
-        extract_symptoms(input) #extracts symptoms from the user respons
-        time_up() #increase time scale to prevent issues of asking the same thing twice
-        extract_diagnoses() #see if there are any new diagnoses
+        self.extract_symptoms(input) #extracts symptoms from the user respons
+        self.time_up() #increase time scale to prevent issues of asking the same thing twice
+        self.extract_diagnoses() #see if there are any new diagnoses
         #TODO put all the functions together
 
     def produce_response(self):
