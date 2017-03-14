@@ -41,7 +41,12 @@ class Magpy:
 
         :return: Returns the bot's first message
         '''
-        intro = "Hi. I'm %s, M.D." % self.name #TODO make intro more complex
+        possibilities = (
+            """Hi. I'm %s, M.D. """,
+            #TODO add more possibilities
+        )
+
+        intro = random.choice(possibilities) % self.name #TODO make intro more complex
         symptoms_sent = self.produce_question()
         return intro + symptoms_sent
 
@@ -114,7 +119,8 @@ class Magpy:
 
         if request_restart or self.exhaused():
             self.__init__(name=random.choice(("Steve", "David", "William")))
-            added_string = "Due to scheduling conflicts, I will have to refer you to another doctor. Have a nice day.\n\n"
+            added_string = "Due to scheduling conflicts, I will have to refer you to another doctor. Have a nice day.\n\n" \
+                + self.greeting()
 
         symptoms_sent = self.produce_question()
 
