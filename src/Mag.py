@@ -47,7 +47,7 @@ class Magpy:
         '''
         possible_symptoms = set(self.synonyms.keys()) - self.symptoms #symptoms not yet acknowledged
         if len(possible_symptoms) > 0:
-            ask_count = len(possible_symptoms) if len(possible_symptoms < 4 else 4 #ask 4 symptoms or as many as possible
+            ask_count = len(possible_symptoms) if len(possible_symptoms) < 4 else 4 #ask 4 symptoms or as many as possible
         else:
             pass #TODO if there are no answers left, this might be an issue
 
