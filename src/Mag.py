@@ -20,7 +20,7 @@ class Magpy:
 
         #disease dictionary with name mapped to symptoms
         self.diseases = {
-            "common cold" : {"sneezing", "coughing"}
+            "common cold" : {"sneezing", "coughing", "fever"}
         }
 
         #symptoms dictionary with implemented name mapped to other forms of the word
@@ -37,7 +37,7 @@ class Magpy:
 
         :return: Returns the bot's first message
         '''
-        return "Hi"
+        return "Hi" #TODO introduce self then ask a question right off the bat
 
     def produce_question(self):
         ''' 
@@ -45,11 +45,28 @@ class Magpy:
 
         :return: Return the string asking about symptoms
         '''
-        possible_symptoms = set(self.synonyms.keys()) - self.symptoms #symptoms not yet acknowledged
-        if len(possible_symptoms) > 0:
-            ask_count = len(possible_symptoms) if len(possible_symptoms) < 4 else 4 #ask 4 symptoms or as many as possible
-        else:
-            pass #TODO if there are no answers left, this might be an issue
+        possibilities = (
+            """Have you experienced %s in the past %s""",
+        )
+
+        rand_symptoms = self.random_symptoms()
+        symptoms_str = self.combined_string(rand_symptoms, conjunction="or")
+        sentence = random.choice(possibilities)
+
+        return sentence % (symptoms_str, self.time_scale)
+
+    def exhaused(self):
+        ''' 
+        Determines if the bot is exhausted of responses (diagnoses or symptoms)
+        '''
+        return len(self.symptoms) == len(self.synonyms.keys()) \
+                or len(self.diagnoses) == len(self.diseases.keys())
+
+    def random_symptoms(self):
+        num_symptoms = random.randint(1, 4)
+        symptoms_left = set(self.synonyms.keys()) - self.symptoms
+        rand_symptoms = random.sample(symptoms_left, num_symptoms) if len(symptoms_left) > num_symptoms else symptoms_left
+        return rand_symptoms
 
     def time_up(self):
         ''' 
@@ -68,40 +85,72 @@ class Magpy:
             self.time_scale = time_scales[new_index]
             return True
 
-    def parse_response(self, input):
+    def parse_response(self, user_input):
         ''' 
         Finds keywords (or doesn't) and produces an appropriate response
 
-        :param input: user input string
+        :param user_input: user input string
         :return: Returns the bot's response
         '''
-        self.extract_symptoms(input) #extracts symptoms from the user respons
         request_restart = not self.time_up() #increase time scale to prevent issues of asking the same thing twice #TODO if we're at forever, then this will fail
-        self.extract_diagnoses() #see if there are any new diagnoses
-        #TODO put all the functions together
 
-    def produce_response(self):
-        ''' 
-        Produces a bot response based on current bot state
+        if request_restart or self.exhaused():
+            self.__init__()
+            return "Due to scheduling conflicts, I will have to refer you to another doctor. Have a nice day."
 
-        Uses the get_new_diagnoses() to form a response telling of those diagnoses
-        Uses all symptoms - acknowledged symptoms to ask about other symptoms
-        Uses time_scale to ask about the user's history in that time
-        * i.e. "You have a cold. Have you also had sneezing, coughing, or happiness in the past century?"
-        '''
-        pass #TODO
+        self.extract_symptoms(user_input) #extracts symptoms from the user respons
+        self.extract_new_diagnoses() #see if there are any new diagnoses
 
-    def extract_symptoms(self, symptom_list):
+        new_diagnoses = self.get_new_diagnoses()
+        diagnoses_sent = "" #sentence to inform about diagnoses (empty at first)
+        if len(new_diagnoses) != 0:
+             diagnoses_sent = self.diagnoses_sentence(new_diagnoses)
+
+        symptoms_sent = self.produce_question()
+
+        return diagnoses_sent + " " + symptoms_sent
+
+    def extract_symptoms(self, user_input):
         ''' 
         Finds all symptoms found in the input string and adds them to the object list
 
-        :param input: user input to be parsed
+        :param user_input: user input to be parsed
         '''
         #self.symptoms.update(symptom_list) #adds symptoms to the list
         for word, values in self.synonyms.items():
-            regex_search = re.search(r"(%s|%s)" % (word, "|".join(values)), input)
+            pattern = "(%s|%s)" % (word, "|".join(values))
+            regex_search = re.search(pattern, user_input)
             if regex_search:
                 self.symptoms.add(word)
+
+    def combined_string(self, diagnoses, conjunction="and"):
+        ''' 
+        Creates a string which lists diagnoses in correct way
+
+        :param diagnoses: collection of strings with diagnoses
+        :param conjunction: word to use between the final terms (usually 'and'/'or')
+        :return: returns string of list (i.e. 'a' or 'a and b' or 'a, b, and c')
+        '''
+        num = len(diagnoses) #number of diagnoses
+        list_diagnoses = list(diagnoses)
+        if num == 0: return "" #hopefully this won't happen but handles case
+        if num == 1: return list_diagnoses[0]
+        if num == 2: return list_diagnoses[0] + " " + conjunction + " " + list_diagnoses[1]
+        return ", ".join(list_diagnoses[:-1]) + ", " + conjunction + " " + list_diagnoses[-1]
+
+    def diagnoses_sentence(self, diagnoses):
+        ''' 
+        Produces humanoid phrase to bear the bad news
+
+        :param diagnoses: collection of strings representing diagnoses
+        :return: returns single string telling about diagnoses
+        '''
+        possibilities = (
+            """I'm sorry, you've been diagnosed with %s""",
+        )
+        sentence = random.choice(possibilities)
+        diagnoses_str = self.combined_string(diagnoses)
+        return sentence % diagnoses_str
 
     def extract_new_diagnoses(self, threshold=0.5):
         ''' 
@@ -111,11 +160,11 @@ class Magpy:
         '''
         for possible_diagnosis in set(self.diseases.keys()) - self.diagnoses:
             #iterates over all diseases in the diseases keys but not diagnoses list
-            total_symptoms = self.diseases[possible_diagnoses]
+            total_symptoms = self.diseases[possible_diagnosis]
             total_symptoms_count = len(total_symptoms)
             current_symptoms_count = len(total_symptoms - self.symptoms)
             if current_symptoms_count / total_symptoms_count > threshold:
-                add_diagnosis(possible_diagnosis)
+                self.add_diagnosis(possible_diagnosis)
 
     def add_diagnosis(self, diagnosis):
         ''' 
@@ -144,3 +193,4 @@ class Magpy:
         :return: Returns a set of all diagnoses (strings)
         '''
         return self.diagnoses
+
