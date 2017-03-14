@@ -7,14 +7,17 @@ Runner module for DavedMD diagnostic chatbot
 '''
 from Mag import Magpy
 
+
 if __name__=="__main__":
-	bot = Magpy()
-	print(bot.greeting())
-	while True:
-		user_response = input()
-		bot_response = bot.parse_response(user_response)
-		print(bot_response)
-		#TODO End condition
+    bot = Magpy()
+    done = False #End condition
 
-	 
-
+    print(bot.greeting())
+    while not done:
+        user_response = input(">>> ")
+        if user_response.lower() == "i quit":
+            done = True #TODO make more complex end condition
+        else:
+            bot_response = bot.parse_response(user_response)
+            print(bot_response)
+    print("Good luck finding a cure without me.")

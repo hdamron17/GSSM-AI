@@ -10,10 +10,12 @@ import random
 import re #regex
 
 class Magpy:
-    def __init__(self):
+    def __init__(self, name="Daved"):
         ''' 
         Constructor for Magpy class which initializes object variables
         '''
+        self.name = name
+
         self.diagnoses = set() #holds all diagnoses
         self.new_diagnoses = set() #holds diagnoses until they are told
         self.symptoms = set() #holds all symptoms the user has said they have
@@ -31,13 +33,17 @@ class Magpy:
         self.symptoms_asked = set() #set of symptoms asked about so far
         self.time_scale = "few hours" #time used when asking about your symptoms (increases with time_up())
 
+        self.questioned_symptoms = set() #questions asked about previously
+
     def greeting(self):
         ''' 
         Gets welcome message (brief introduction then asks about symptoms)
 
         :return: Returns the bot's first message
         '''
-        return "Hi" #TODO introduce self then ask a question right off the bat
+        intro = "Hi. I'm %s, M.D." % self.name #TODO make intro more complex
+        symptoms_sent = self.produce_question()
+        return intro + symptoms_sent
 
     def produce_question(self):
         ''' 
@@ -46,10 +52,12 @@ class Magpy:
         :return: Return the string asking about symptoms
         '''
         possibilities = (
-            """Have you experienced %s in the past %s""",
+            """Have you experienced %s in the past %s? """,
+            #TODO add more possibilities
         )
 
         rand_symptoms = self.random_symptoms()
+        self.questioned_symptoms = rand_symptoms #store questions in case user says "yes"
         symptoms_str = self.combined_string(rand_symptoms, conjunction="or")
         sentence = random.choice(possibilities)
 
@@ -94,9 +102,7 @@ class Magpy:
         '''
         request_restart = not self.time_up() #increase time scale to prevent issues of asking the same thing twice #TODO if we're at forever, then this will fail
 
-        if request_restart or self.exhaused():
-            self.__init__()
-            return "Due to scheduling conflicts, I will have to refer you to another doctor. Have a nice day."
+        added_string = "" #Used to add any comments at the beginning
 
         self.extract_symptoms(user_input) #extracts symptoms from the user respons
         self.extract_new_diagnoses() #see if there are any new diagnoses
@@ -104,11 +110,15 @@ class Magpy:
         new_diagnoses = self.get_new_diagnoses()
         diagnoses_sent = "" #sentence to inform about diagnoses (empty at first)
         if len(new_diagnoses) != 0:
-             diagnoses_sent = self.diagnoses_sentence(new_diagnoses)
+            diagnoses_sent = self.diagnoses_sentence(new_diagnoses)
+
+        if request_restart or self.exhaused():
+            self.__init__(name=random.choice(("Steve", "David", "William")))
+            added_string = "Due to scheduling conflicts, I will have to refer you to another doctor. Have a nice day.\n\n"
 
         symptoms_sent = self.produce_question()
 
-        return diagnoses_sent + " " + symptoms_sent
+        return diagnoses_sent + added_string + symptoms_sent
 
     def extract_symptoms(self, user_input):
         ''' 
@@ -117,11 +127,17 @@ class Magpy:
         :param user_input: user input to be parsed
         '''
         #self.symptoms.update(symptom_list) #adds symptoms to the list
+        found = False #keeps track of if anything is found
         for word, values in self.synonyms.items():
+            #loop through to find each word and its synonyms
             pattern = "(%s|%s)" % (word, "|".join(values))
-            regex_search = re.search(pattern, user_input)
+            regex_search = re.search(pattern, user_input.lower())
             if regex_search:
                 self.symptoms.add(word)
+                found = True
+        if not found and re.search("(yes|all)", user_input.lower()):
+            #user responds yes (as in they have all of the above)
+            self.symptoms.update(self.questioned_symptoms)
 
     def combined_string(self, diagnoses, conjunction="and"):
         ''' 
@@ -146,7 +162,8 @@ class Magpy:
         :return: returns single string telling about diagnoses
         '''
         possibilities = (
-            """I'm sorry, you've been diagnosed with %s""",
+            """I'm sorry, you've been diagnosed with %s. """,
+            #TODO add more possibilities
         )
         sentence = random.choice(possibilities)
         diagnoses_str = self.combined_string(diagnoses)
@@ -162,7 +179,8 @@ class Magpy:
             #iterates over all diseases in the diseases keys but not diagnoses list
             total_symptoms = self.diseases[possible_diagnosis]
             total_symptoms_count = len(total_symptoms)
-            current_symptoms_count = len(total_symptoms - self.symptoms)
+            current_symptoms_count = len(total_symptoms & self.symptoms)
+
             if current_symptoms_count / total_symptoms_count > threshold:
                 self.add_diagnosis(possible_diagnosis)
 
