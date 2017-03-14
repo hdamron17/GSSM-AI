@@ -14,10 +14,14 @@ if __name__=="__main__":
 
     print(bot.greeting())
     while not done:
-        user_response = input(">>> ")
-        if user_response.lower() == "i quit":
-            done = True #TODO make more complex end condition
-        else:
-            bot_response = bot.parse_response(user_response)
-            print(bot_response)
+        try:
+            user_response = input(">>> ")
+            if user_response.lower() in ("i quit", "chao"):
+                done = True #TODO make more complex end condition
+            else:
+                bot_response = bot.parse_response(user_response)
+                print(bot_response)
+        except EOFError:
+            print("Ciao") #Newline
+            done = True
     print("Good luck finding a cure without me.")

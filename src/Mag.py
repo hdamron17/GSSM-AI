@@ -119,7 +119,7 @@ class Magpy:
 
         if request_restart or self.exhaused():
             self.__init__(name=random.choice(("Steve", "David", "William")))
-            added_string = "Due to scheduling conflicts, I will have to refer you to another doctor. Have a nice day.\n\n" \
+            return "Due to scheduling conflicts, I will have to refer you to another doctor. Have a nice day.\n\n" \
                 + self.greeting()
 
         symptoms_sent = self.produce_question()
