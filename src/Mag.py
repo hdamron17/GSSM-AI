@@ -22,12 +22,18 @@ class Magpy:
 
         #disease dictionary with name mapped to symptoms
         self.diseases = {
-            "common cold" : {"sneezing", "coughing", "fever"}
-        }
+		"common cold" : {"sneezing", "coughing", "fever", "cold"}, 
+		"food poisioning": {"vomiting", "diareah", "upset stomach" },
+		"the human condition" : {"loneliness", "sadness", "pain"},''' "broken bones" : {"aches", "pain","impared movement"},'''
+		"Writer's Block": {"uncreative", "disorientation", "nausia"}, "Caffine Addiction": {"restless", "anxiety"}, 
+		"commiting a social faux pas":{"anxious", "paranoid", "guilty"}, "Oedipus Complex":{"jelousy", "guilty", "violent"},
+		"narssicism":{"feelings of superiority", "illusions of grandueur", "talkative", "projection"} 
+	}
 
         #symptoms dictionary with implemented name mapped to other forms of the word
         self.synonyms = {
-            "sneezing" : {"sneez", "achoo"}
+        	"sneezing" : {"sneez", "achoo"}, "cold" : {"chilly", "freezing"}, "vomitting" : {"puking"}, "pain" : {"suffering"}, 
+		"anxiety":{"anxious", "nervous", "nervousness"}, "disatisfaction":{"unhappiness"}, "aches":{"discomfort"}
         }
 
         self.symptoms_asked = set() #set of symptoms asked about so far
@@ -58,7 +64,7 @@ class Magpy:
         '''
         possibilities = (
             """Have you experienced %s in the past %s? """,
-            #TODO add more possibilities
+            """Have you run into %s in the past %s? """
         )
 
         rand_symptoms = self.random_symptoms()
@@ -89,7 +95,7 @@ class Magpy:
         '''
         time_scales = ("few hours", "day", "3 days", "week", "fortnight", "month",
             "3 months", "6 months", "year", "Mayan B'ak'tun", "2 years", "5 years", "decade", "lifetime", "century",
-            "millennium", "Mayan Piktun", "Mayan Kalabtun", "Megaannus", "Mayan K'inchiltun",
+             "modern era", "millennium", "Mayan Piktun", "Mayan Kalabtun", "Megaannus", "Mayan K'inchiltun",
             "Mayan Alautun", "epoch", "eon", "forever")
         new_index = time_scales.index(self.time_scale) + 1
         if new_index >= len(time_scales):
@@ -168,8 +174,9 @@ class Magpy:
         :return: returns single string telling about diagnoses
         '''
         possibilities = (
-            """I'm sorry, you've been diagnosed with %s. """,
-            #TODO add more possibilities
+         """I'm sorry, you've been diagnosed with %s. """,
+         """Unfortunately you have %s. """,
+	 """Sounds like you have %s. """ 
         )
         sentence = random.choice(possibilities)
         diagnoses_str = self.combined_string(diagnoses)
