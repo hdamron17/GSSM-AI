@@ -24,21 +24,39 @@ class Magpy:
         self.diseases = {
             "common cold" : {"sneezing", "coughing", "fever", "cold"}, 
             "food poisioning": {"vomiting", "diareah", "upset stomach" },
-            "the human condition" : {"loneliness", "sadness", "pain"},''' "broken bones" : {"aches", "pain","impared movement"},'''
-            "Writer's Block" : {"uncreative", "disorientation", "nausia"}, "Caffine Addiction": {"restless", "anxiety"}, 
-            "commiting a social faux pas" : {"anxious", "paranoid", "guilty"}, "Oedipus Complex":{"jelousy", "guilty", "violent"},
-            "narssicism" : {"feelings of superiority", "illusions of grandueur", "talkative", "projection"} 
+            "the human condition" : {"loneliness", "sadness", "pain"},
+	    "broken bones" : {"aches", "pain","impared movement"},
+            "Writer's Block" : {"uncreative", "disorientation", "nausea"},
+	    "Caffine Addiction": {"restless", "anxiety"}, 
+            "commiting a social faux pas" : {"anxiety", "paranoid", "guilty"}, 
+	    "Oedipus Complex":{"jelousy", "guilt", "violent"},
+	    "Cleptomania" : {"impulsivity", "jelousy"} 
         }
 
         #symptoms dictionary with implemented name mapped to other forms of the word
         self.synonyms = {
-            "sneezing" : {"sneez", "achoo"},
+            "diareah" : {"shits"},
+	    "upset stomach":{"stomachache", "stomach ache"},
+	    "loneliness": {"lone"},
+	    "uncreative": {"unoriginal"},
+	    "impared movement": {"crippled"},
+	    "nausea": {"nause"},
+	    "restless":{"insomnia"},
+	    "paranoid" : {"paranoia"},
+	    "jelousy": {"envy"},
+	    "guilt":{"shame"},
+	    "disoriented": {"dazed","confused"},
+	    "sadeness": {"depression"},
+	    "sneezing" : {"sneez", "achoo"},
+	    "coughing" : {"hacking"},
+	    "fever" : {"high temprature"},  
             "cold" : {"chilly", "freezing"},
             "vomitting" : {"puking"},
             "pain" : {"suffering"},
             "anxiety" : {"anxious", "nervous", "nervousness"},
             "disatisfaction" : {"unhappiness"},
-            "aches" : {"discomfort"}
+            "aches" : {"discomfort"},
+	    "impulsivity" : {"impulse"}
         }
 
         self.symptoms_asked = set() #set of symptoms asked about so far
