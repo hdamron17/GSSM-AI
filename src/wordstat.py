@@ -56,12 +56,8 @@ class ExtensionCharCount(Extension):
 class ExtensionDelimitedCount(Extension):
     def init(self):
         self.key = ""
-
-class ExtensionWordCount(Extension):
-    def init(self):
-        self.key = "words"
-        self.delimiter = '.!? \t\n\r\f\v'#matches line-ending punctuation and whitespace characters
-        self.misc_punctuation = '(){}<>[]$\'\"' #matches puntuation marks which could possibly be placed conveniently beside a delimiter but not signify a new word
+        self.delimiter = ''#matches line-ending punctuation and whitespace characters
+        self.misc_punctuation = '' #matches puntuation marks which could possibly be placed conveniently beside a delimiter but not signify a new word
         self.punctuating = False #set to true when previous character is some sort of puntuation (so that something like "what." doesn't match two words '"what' and '"')
 
     def count(self, character):
@@ -85,53 +81,12 @@ class ExtensionWordCount(Extension):
             # else do nothing
         return False
 
-class ExtensionSentenceCount(Extension):
+class ExtensionWordCount(ExtensionDelimitedCount):
     def init(self):
-        self.key = "sentences"
-        self.delimiter = '.!?'#matches line-ending punctuation and whitespace characters
-        self.misc_punctuation = '(){}<>[]$\'\" \t\n\r\f\v' #matches puntuation marks which could possibly be placed conveniently beside a delimiter but not signify a new word
+        self.key = "words"
+        self.delimiter = '.!? \t\n\r\f\v'#matches line-ending punctuation and whitespace characters
+        self.misc_punctuation = '(){}<>[]$\'\"' #matches puntuation marks which could possibly be placed conveniently beside a delimiter but not signify a new word
         self.punctuating = False #set to true when previous character is some sort of puntuation (so that something like "what." doesn't match two words '"what' and '"')
-
-
-
-    def count(self, character):
-        pass #TODO count sentences by character
-
-class ExtensionSyllableCount(Extension):
-    def init(self):
-        self.key = "syllables"
-
-    def count(self, character):
-        pass #TODO count syllables by character
-
-class WordStat():
-    def __init__(self, *extensions):
-        '''
-        Constructs a WordStat object to start counting stats of a text
-        :param extensions: multiple Extension classes (not initialized)
-        '''
-        self.extensions = [ext() for ext in extensions]
-        self.reset()
-
-    def reset(self):
-        for ext in self.extensions:
-            ext.reset()
-
-    def analyze(self, document):
-        '''
-        Analyzes a text document and calculates its statistics
-        :param document: file object to read through
-        :return: returns a dictionary with analysis data
-            May have keys "words", "sentences", "syllables", etc.
-        '''
-        character = document.read(1)
-        while character != '':
-            for ext in self.extensions:
-                ext.count(character.lower()) #count for each couting extension
-            character = document.read(1)
-        for ext in self.extensions:
-            ext.count(character) #count one last time with the empty character to finish words, etc.
-        return merge_dicts([single.get() for single in self.extensions])
 
 def merge_dicts(dicts):
     '''
