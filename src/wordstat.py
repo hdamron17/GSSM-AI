@@ -1,14 +1,19 @@
 from io import StringIO
+import re
 
 class Extension():
     '''
     Extension base class which analyzes some aspect in an extending class
     '''
-    def __init__(self):
+    def __init__(self, debug=False):
         '''
         Constructor for basic extension
+        :param debug: if true, extensions will keep track of a visualization of counting
         '''
         self.reset()
+
+    def view(self):
+        return self.visual
 
     def reset(self):
         '''
@@ -43,18 +48,51 @@ class ExtensionCharCount(Extension):
         self.key = "chars"
 
     def count(self, character):
-        self.total += 1
+        if character != '':
+            self.total += 1
+            return True
+        return False
+
+class ExtensionDelimitedCount(Extension):
+    def init(self):
+        self.key = ""
 
 class ExtensionWordCount(Extension):
     def init(self):
         self.key = "words"
+        self.delimiter = '.!? \t\n\r\f\v'#matches line-ending punctuation and whitespace characters
+        self.misc_punctuation = '(){}<>[]$\'\"' #matches puntuation marks which could possibly be placed conveniently beside a delimiter but not signify a new word
+        self.punctuating = False #set to true when previous character is some sort of puntuation (so that something like "what." doesn't match two words '"what' and '"')
 
     def count(self, character):
-        pass #TODO count words letter by character
+        if character == '':
+            if not self.punctuating:
+                # if the previous character was not punctuating, this is the end of a word
+                self.total += 1
+                return True
+        elif self.punctuating:
+            #the previous character was a punctuation character
+            if character not in self.delimiter + self.misc_punctuation:
+                #the character is not another piece of punctuation
+                self.punctuating = False
+            # else do nothing
+        else:
+            #previously just traditional ol' characters
+            if character in self.delimiter:
+                self.total += 1
+                self.punctuating = True
+                return True
+            # else do nothing
+        return False
 
 class ExtensionSentenceCount(Extension):
     def init(self):
         self.key = "sentences"
+        self.delimiter = '.!?'#matches line-ending punctuation and whitespace characters
+        self.misc_punctuation = '(){}<>[]$\'\" \t\n\r\f\v' #matches puntuation marks which could possibly be placed conveniently beside a delimiter but not signify a new word
+        self.punctuating = False #set to true when previous character is some sort of puntuation (so that something like "what." doesn't match two words '"what' and '"')
+
+
 
     def count(self, character):
         pass #TODO count sentences by character
@@ -89,10 +127,11 @@ class WordStat():
         character = document.read(1)
         while character != '':
             for ext in self.extensions:
-                ext.count(character)
+                ext.count(character.lower()) #count for each couting extension
             character = document.read(1)
-        else:
-            return merge_dicts([single.get() for single in self.extensions])
+        for ext in self.extensions:
+            ext.count(character) #count one last time with the empty character to finish words, etc.
+        return merge_dicts([single.get() for single in self.extensions])
 
 def merge_dicts(dicts):
     '''
