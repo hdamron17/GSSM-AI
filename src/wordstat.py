@@ -83,7 +83,7 @@ class ExtensionWordCount(ExtensionDelimitedCount):
         super().init()
         self.key = "words"
         self.delimiter = '.!? \t\n\r\f\v'#matches line-ending punctuation and whitespace characters
-        self.misc_punctuation = '(){}<>[]$\'\"' #matches puntuation marks which could possibly be placed conveniently beside a delimiter but not signify a new word
+        self.misc_punctuation = '(){}<>[]$:;,/\\\'\"' #matches puntuation marks which could possibly be placed conveniently beside a delimiter but not signify a new word
         self.punctuating = False #set to true when previous character is some sort of puntuation (so that something like "what." doesn't match two words '"what' and '"')
 
 class ExtensionSentenceCount(ExtensionDelimitedCount):
@@ -91,7 +91,7 @@ class ExtensionSentenceCount(ExtensionDelimitedCount):
         super().init()
         self.key = "sentences"
         self.delimiter = '.!?'#matches line-ending punctuation and whitespace characters
-        self.misc_punctuation = '(){}<>[]$\'\" \t\n\r\f\v' #matches puntuation marks which could possibly be placed conveniently beside a delimiter but not signify a new word
+        self.misc_punctuation = '(){}<>[]$:;,/\\\'\" \t\n\r\f\v' #matches puntuation marks which could possibly be placed conveniently beside a delimiter but not signify a new word
         self.punctuating = False #set to true when previous character is some sort of puntuation (so that something like "what." doesn't match two words '"what' and '"')
 
 class ExtensionSyllableCount(Extension):
@@ -104,6 +104,8 @@ class ExtensionSyllableCount(Extension):
         self.tion = "tion" #full tion string to index
         self.vowel_y = False #becomes true when y is preceded by a vowel so if next is vowel, it is another syllable
         self.lone_e = False #becomes true when e follows a non-vowel so silent e can be detected
+        self.vowel_count = 0 #counts number of non-y vowels in each word to allow specification of silent e
+        self.misc_punctuation = '(){}<>[]$:;,/\\\'\"\t\n\r\f\v' #matches puntuation marks which could possibly be placed conveniently beside a delimiter but not signify a new word
 
         ### Syllable rules
         # A consecutive series of vowels is a syllable unless
@@ -114,31 +116,39 @@ class ExtensionSyllableCount(Extension):
         # "tion" is a single syllable
 
     def count(self, character):
+        # print(character, end='') #TODO remove
+
+        if character in self.misc_punctuation and character != '':
+            # ignore any character that is punctuation
+            return
+
         new_word = self.word_count.count(character) #pass the character on
 
-        if new_word and self.lone_e:
-            #subtract one because this is the end and the previous e was actually silent
-            self.total -= 1
-            print('{*}', end='') #TODO remove
-        elif character == 'o' and self.prev in self.vowels and self.prev != 'o':
+        if new_word:
+            if self.vowel_count > 1 and self.lone_e:
+                #subtract one because this is the end and the previous e was actually silent
+                self.total -= 1
+                # print('{*}', end='') #TODO remove
+            self.vowel_count = 0
+        elif character == 'o' and self.prev in self.vowels and self.prev not in 'o':
             # o follows non-o vowel so syllable
             self.total += 1
-            print('|', end='') #TODO remove
+            # print('#', end='') #TODO remove
         elif character == "a" and self.prev in "ui":
             # a follows u or i so syllable
             self.total += 1
-            print('|', end='') #TODO remove
+            # print('|', end='') #TODO remove
         elif self.vowel_y and character in self.vowels:
             # vowel following y is syllable
             self.total += 1
-            print('|', end='') #TODO remove
-        elif character in self.vowels and self.prev not in self.vowels:
+            # print('|', end='') #TODO remove
+        elif character in self.vowels and (self.prev not in self.vowels or self.prev == '') and character != 'y':
             # vowel not preceded by a vowel
             self.total += 1
-            print('|', end='') #TODO remove
+            # print('&', end='') #TODO remove
 
         # Statements which affect
-        if character == 'y' and self.prev in self.vowels:
+        if character == 'y' and self.prev in self.vowels and self.prev != '':
             # this is a y following a value so the next may be another syllable even though it's multiple vowels in a row
             self.vowel_y = True
         else:
@@ -152,15 +162,21 @@ class ExtensionSyllableCount(Extension):
             # reset lone_e counter
             self.lone_e = False
 
+        if character in self.vowels and character != 'y':
+            # word has another vowel (to be reset at start of word)
+            self.vowel_count += 1
+
         if character == self.tion[self.tion_pos+1] and (self.prev == self.tion[self.tion_pos] if self.tion_pos > 0 else True):
             # this is the next letter in the tion sequence
             self.tion_pos += 1
+            #print('*', end='')
             if self.tion_pos >= 3:
                 #the tion sequence is complete and a syllable was over counted
                 self.total -= 1
-                print('{*}', end='') #TODO remove
-
-        print(character, end='') #TODO remove
+                self.tion_pos = -1
+                # print('{^}', end='') #TODO remove
+        else:
+            self.tion_pos = -1
 
         self.prev = character if not new_word else '' #update the previous character or cast any new word to empty
 
@@ -185,13 +201,19 @@ class WordStat():
             May have keys "words", "sentences", "syllables", etc.
         '''
         character = document.read(1)
+
         while character != '':
             for ext in self.extensions:
                 ext.count(character.lower()) #count for each couting extension
             character = document.read(1)
+
         for ext in self.extensions:
             ext.count(character) #count one last time with the empty character to finish words, etc.
-        return merge_dicts([single.get() for single in self.extensions])
+
+        ret = merge_dicts([single.get() for single in self.extensions])
+        self.reset() #reset for next iteration
+
+        return ret
 
 def merge_dicts(dicts):
     '''
@@ -205,10 +227,10 @@ def merge_dicts(dicts):
     for single in dicts:
         result.update(single)
     return result
-11 + 10 + 5
+
 if __name__ == '__main__':
     counter = WordStat(ExtensionCharCount, ExtensionWordCount, ExtensionSentenceCount, ExtensionSyllableCount)
     text = StringIO("I would walk five hundred miles. And I\nwould walk five hundred more.\nHe said, \"Hi.\" And I said, \"I don't wanna talk to you no more, papaya!\"")
-    text = StringIO("My imagination says papaya in the fourth degree of ion riddance")
+    # text = StringIO("My imagination says papaya in the fourth degree of ion riddance") #TODO make it work with
     output = counter.analyze(text)
     print('\n' + str(output)) #TODO take out the newline
