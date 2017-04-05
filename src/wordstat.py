@@ -244,6 +244,7 @@ def flesch_kincaid_level(fstream):
     words_per_sentence = words / sentences
     syllables_per_word = syllables / words
 
+    # Flesch-Kincaid algorithm from http://www.readabilityformulas.com/flesch-grade-level-readability-formula.php
     result = (0.39 * words_per_sentence) + (11.8 * syllables_per_word) - 15.59
     return result
 
