@@ -1,5 +1,16 @@
+#! /usr/bin/env python
+
+'''
+Analyzes texts and calculates their reading levels
+
+Put relative paths to files in texts/index.txt
+'''
+
 from io import StringIO
 import re
+import os, sys
+from os.path import join as pathjoin, dirname, abspath
+
 
 class Extension():
     '''
@@ -250,10 +261,14 @@ def merge_dicts(dicts):
     return result
 
 if __name__ == '__main__':
-    counter = WordStat(ExtensionCharCount, ExtensionWordCount, ExtensionSentenceCount, ExtensionSyllableCount)
-    text = StringIO("I would walk five hundred miles. And I\nwould walk five hundred more.\nHe said, \"Hi.\" And I said, \"I don't wanna talk to you no more, papaya!\"")
-    # text = StringIO("My imagination says papaya in the fourth degree of ion riddance") #TODO make it work with
-    output = counter.analyze(text)
-    print(output)
-
-    print('Flesch-Kincaid reading level: %s' % flesch_kincaid_level(text))
+    textspath = pathjoin(dirname(abspath(sys.argv[0])), "..", "texts")
+    with open(pathjoin(textspath, "index.txt")) as index:
+        for line in index.readlines():
+            line = line.partition("#")[0].strip()
+            if len(line) > 0:
+                try:
+                    with open(pathjoin(textspath, line)) as text:
+                        print("Analysis of " + line)
+                        print("  Flesch-Kincaid reading level: %.2f" % flesch_kincaid_level(text))
+                except:
+                    print("Failed to read " + line)
