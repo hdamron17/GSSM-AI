@@ -193,27 +193,48 @@ class WordStat():
         for ext in self.extensions:
             ext.reset()
 
-    def analyze(self, document):
+    def analyze(self, fstream):
         '''
         Analyzes a text document and calculates its statistics
-        :param document: file object to read through
+        :param fstream: stream (likely File or StringIO) object to read through
         :return: returns a dictionary with analysis data
             May have keys "words", "sentences", "syllables", etc.
         '''
-        character = document.read(1)
+        start_pos = fstream.tell() #current position to rewind to
+        character = fstream.read(1)
 
         while character != '':
             for ext in self.extensions:
                 ext.count(character.lower()) #count for each couting extension
-            character = document.read(1)
+            character = fstream.read(1)
 
         for ext in self.extensions:
             ext.count(character) #count one last time with the empty character to finish words, etc.
 
         ret = merge_dicts([single.get() for single in self.extensions])
         self.reset() #reset for next iteration
+        fstream.seek(start_pos) #restart reader
 
         return ret
+
+def flesch_kincaid_level(fstream):
+    '''
+    Analyzes a text document and calculates Flesch Kincaid reading level
+    :param fstream: stream (likely File or StringIO) object to read through
+    :return: returns the decimal number grade level of the appropriate reader
+    '''
+    counter = WordStat(ExtensionCharCount, ExtensionWordCount, ExtensionSentenceCount, ExtensionSyllableCount)
+    stats = counter.analyze(fstream)
+
+    words = stats['words']
+    sentences = stats['sentences']
+    syllables = stats['syllables']
+
+    words_per_sentence = words / sentences
+    syllables_per_word = syllables / words
+
+    result = (0.39 * words_per_sentence) + (11.8 * syllables_per_word) - 15.59
+    return result
 
 def merge_dicts(dicts):
     '''
@@ -233,4 +254,6 @@ if __name__ == '__main__':
     text = StringIO("I would walk five hundred miles. And I\nwould walk five hundred more.\nHe said, \"Hi.\" And I said, \"I don't wanna talk to you no more, papaya!\"")
     # text = StringIO("My imagination says papaya in the fourth degree of ion riddance") #TODO make it work with
     output = counter.analyze(text)
-    print('\n' + str(output)) #TODO take out the newline
+    print(output)
+
+    print('Flesch-Kincaid reading level: %s' % flesch_kincaid_level(text))
