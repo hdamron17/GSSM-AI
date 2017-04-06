@@ -10,6 +10,7 @@ from io import StringIO
 import re
 import os, sys
 from os.path import join as pathjoin, dirname, abspath
+import itertools
 
 
 class Extension():
@@ -37,7 +38,7 @@ class Extension():
         self.key = "" #Overridden by Extension
 
         #Overriden by extension
-    def count(self, character):
+    def count(self, character, debug=False):
         '''
         Updates the count by the letter passed
 
@@ -55,7 +56,7 @@ class ExtensionCharCount(Extension):
     def init(self):
         self.key = "chars"
 
-    def count(self, character):
+    def count(self, character, debug=False):
         if character != '':
             self.total += 1
             return True
@@ -68,7 +69,7 @@ class ExtensionDelimitedCount(Extension):
         self.misc_punctuation = '' #matches puntuation marks which could possibly be placed conveniently beside a delimiter but not signify a new word
         self.punctuating = False #set to true when previous character is some sort of puntuation (so that something like "what." doesn't match two words '"what' and '"')
 
-    def count(self, character):
+    def count(self, character, debug=False):
         if character == '':
             if not self.punctuating:
                 # if the previous character was not punctuating, this is the end of a word
@@ -105,7 +106,27 @@ class ExtensionSentenceCount(ExtensionDelimitedCount):
         self.misc_punctuation = '(){}<>[]$:;,/\\\'\" \t\n\r\f\v' #matches puntuation marks which could possibly be placed conveniently beside a delimiter but not signify a new word
         self.punctuating = False #set to true when previous character is some sort of puntuation (so that something like "what." doesn't match two words '"what' and '"')
 
+def merge(lists):
+    '''
+    Reduces a list of list to a list containing elements of all lists
+    :param lists: list of lists to be merged into a single list
+    '''
+    return [item for sublist in lists for item in sublist] #2d list into 1d list
+
 class ExtensionSyllableCount(Extension):
+    def expand_exception(self, exception, wildcard='*'):
+        '''
+        Expands an exception to include all vowels on a wildcard
+        :param exception: 2-tuple with string exception and integer modifier
+        :return: Returns a list of tuples in same form but without wildcard
+        '''
+        wildcard_pos = exception[0].find(wildcard)
+        if wildcard_pos != -1:
+            ret = merge([self.expand_exception((exception[0].replace(wildcard, vowel, 1), exception[1])) for vowel in "aeiouy"])
+            return ret
+        else:
+            return [exception]
+
     def init(self):
         self.key = "syllables"
         self.prev = '' #previous letter
@@ -117,6 +138,11 @@ class ExtensionSyllableCount(Extension):
         self.lone_e = False #becomes true when e follows a non-vowel so silent e can be detected
         self.vowel_count = 0 #counts number of non-y vowels in each word to allow specification of silent e
         self.misc_punctuation = '(){}<>[]$:;,/\\\'\"\t\n\r\f\v' #matches puntuation marks which could possibly be placed conveniently beside a delimiter but not signify a new word
+        self.exceptions = [("tion", -1), ("*ble", 1), ("*sm", 1), ("thm", 1)] #adds the appropriate ammount when it finds such an exception
+        #Note: * expands to any vowel
+        self.exceptions = merge([self.expand_exception(exception) for exception in self.exceptions]) #expands * to all vowels
+
+        self.exceptions_pos = [-1] * len(self.exceptions)
 
         ### Syllable rules
         # A consecutive series of vowels is a syllable unless
@@ -126,37 +152,42 @@ class ExtensionSyllableCount(Extension):
         # e on the end of a word is silent
         # "tion" is a single syllable
 
-    def count(self, character):
-        # print(character, end='') #TODO remove
+        ### TODO
+        # -able is two syllables
+        # -ism is two syllables
+
+    def count(self, character, debug=False):
+        if debug: print(character, end='') #TODO remove
 
         if character in self.misc_punctuation and character != '':
             # ignore any character that is punctuation
             return
 
         new_word = self.word_count.count(character) #pass the character on
+        #if new_word and debug: print("{}", end='') #TODO remove
 
         if new_word:
             if self.vowel_count > 1 and self.lone_e:
                 #subtract one because this is the end and the previous e was actually silent
                 self.total -= 1
-                # print('{*}', end='') #TODO remove
+                # if debug: print('{*}', end='') #TODO remove
             self.vowel_count = 0
         elif character == 'o' and self.prev in self.vowels and self.prev not in 'o':
             # o follows non-o vowel so syllable
             self.total += 1
-            # print('#', end='') #TODO remove
+            # if debug: print('#', end='') #TODO remove
         elif character == "a" and self.prev in "ui":
             # a follows u or i so syllable
             self.total += 1
-            # print('|', end='') #TODO remove
+            # if debug: print('|', end='') #TODO remove
         elif self.vowel_y and character in self.vowels:
             # vowel following y is syllable
             self.total += 1
-            # print('|', end='') #TODO remove
+            # if debug: print('|', end='') #TODO remove
         elif character in self.vowels and (self.prev not in self.vowels or self.prev == '') and character != 'y':
             # vowel not preceded by a vowel
             self.total += 1
-            # print('&', end='') #TODO remove
+            # if debug: print('&', end='') #TODO remove
 
         # Statements which affect
         if character == 'y' and self.prev in self.vowels and self.prev != '':
@@ -177,17 +208,20 @@ class ExtensionSyllableCount(Extension):
             # word has another vowel (to be reset at start of word)
             self.vowel_count += 1
 
-        if character == self.tion[self.tion_pos+1] and (self.prev == self.tion[self.tion_pos] if self.tion_pos > 0 else True):
-            # this is the next letter in the tion sequence
-            self.tion_pos += 1
-            #print('*', end='')
-            if self.tion_pos >= 3:
-                #the tion sequence is complete and a syllable was over counted
-                self.total -= 1
-                self.tion_pos = -1
-                # print('{^}', end='') #TODO remove
-        else:
-            self.tion_pos = -1
+        for exception_num, pos_num in zip(range(len(self.exceptions)), range(len(self.exceptions_pos))):
+            #Loop through all exceptions and apply the test
+            exception, modifier = self.exceptions[exception_num]
+            pos = self.exceptions_pos[pos_num]
+
+            if character == exception[pos+1] and (self.prev == exception[pos] if pos >= 0 else True):
+                # this is the next letter in the tion sequence
+                self.exceptions_pos[pos_num] += 1
+
+                if self.exceptions_pos[pos_num] >= len(exception)-1:
+                    #the tion sequence is complete and a syllable was over counted
+                    self.total += modifier
+                    self.exceptions_pos[pos_num] = -1
+                    if debug: print('{^%s}' % exception, end='')
 
         self.prev = character if not new_word else '' #update the previous character or cast any new word to empty
 
@@ -204,23 +238,25 @@ class WordStat():
         for ext in self.extensions:
             ext.reset()
 
-    def analyze(self, fstream):
+    def analyze(self, fstream, debug=False):
         '''
         Analyzes a text document and calculates its statistics
         :param fstream: stream (likely File or StringIO) object to read through
         :return: returns a dictionary with analysis data
             May have keys "words", "sentences", "syllables", etc.
         '''
+        if debug: print("  Text: ", end='')
+
         start_pos = fstream.tell() #current position to rewind to
         character = fstream.read(1)
 
         while character != '':
             for ext in self.extensions:
-                ext.count(character.lower()) #count for each couting extension
+                ext.count(character.lower(), debug) #count for each couting extension
             character = fstream.read(1)
 
         for ext in self.extensions:
-            ext.count(character) #count one last time with the empty character to finish words, etc.
+            ext.count(character, debug) #count one last time with the empty character to finish words, etc.
 
         ret = merge_dicts([single.get() for single in self.extensions])
         self.reset() #reset for next iteration
@@ -262,6 +298,7 @@ def merge_dicts(dicts):
     return result
 
 if __name__ == '__main__':
+    counter = WordStat(ExtensionCharCount, ExtensionWordCount, ExtensionSentenceCount, ExtensionSyllableCount)
     textspath = pathjoin(dirname(abspath(sys.argv[0])), "..", "texts")
     with open(pathjoin(textspath, "index.txt")) as index:
         for line in index.readlines():
@@ -270,6 +307,7 @@ if __name__ == '__main__':
                 try:
                     with open(pathjoin(textspath, line)) as text:
                         print("Analysis of " + line)
+                        print("  WordStat: %s" % counter.analyze(text, debug=True))
                         print("  Flesch-Kincaid reading level: %.2f" % flesch_kincaid_level(text))
-                except:
+                except (FileNotFoundError, IOError):
                     print("Failed to read " + line)
