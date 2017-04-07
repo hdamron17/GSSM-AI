@@ -170,24 +170,24 @@ class ExtensionSyllableCount(Extension):
             if self.vowel_count > 1 and self.lone_e:
                 #subtract one because this is the end and the previous e was actually silent
                 self.total -= 1
-                # if debug: print('{*}', end='') #TODO remove
+                if debug: print('{*}', end='') #TODO remove
             self.vowel_count = 0
         elif character == 'o' and self.prev in self.vowels and self.prev not in 'o':
             # o follows non-o vowel so syllable
             self.total += 1
-            # if debug: print('#', end='') #TODO remove
+            if debug: print('|', end='') #TODO remove
         elif character == "a" and self.prev in "ui":
             # a follows u or i so syllable
             self.total += 1
-            # if debug: print('|', end='') #TODO remove
+            if debug: print('|', end='') #TODO remove
         elif self.vowel_y and character in self.vowels:
             # vowel following y is syllable
             self.total += 1
-            # if debug: print('|', end='') #TODO remove
+            if debug: print('|', end='') #TODO remove
         elif character in self.vowels and (self.prev not in self.vowels or self.prev == '') and character != 'y':
             # vowel not preceded by a vowel
             self.total += 1
-            # if debug: print('&', end='') #TODO remove
+            if debug: print('|', end='') #TODO remove
 
         # Statements which affect
         if character == 'y' and self.prev in self.vowels and self.prev != '':
@@ -307,7 +307,7 @@ if __name__ == '__main__':
                 try:
                     with open(pathjoin(textspath, line)) as text:
                         print("Analysis of " + line)
-                        print("  WordStat: %s" % counter.analyze(text, debug=True))
+                        print("  WordStat: %s" % counter.analyze(text, debug=False))
                         print("  Flesch-Kincaid reading level: %.2f" % flesch_kincaid_level(text))
                 except (FileNotFoundError, IOError):
                     print("Failed to read " + line)

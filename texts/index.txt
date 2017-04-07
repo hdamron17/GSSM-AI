@@ -1,5 +1,8 @@
 #List filenames for displaying here
 #Use hash for commenting
 
-#example.txt #Example to display usage
+example.txt #Example to display usage
 chaouia.txt #Testing the limits
+suess.txt #"Oh, the Places You'll Go" by Dr. Suess
+trump.txt #Donald Trump inaugural speech
+beemovie.txt #Full text of the bee movie
