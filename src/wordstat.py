@@ -270,7 +270,7 @@ def flesch_kincaid_level(fstream):
     :param fstream: stream (likely File or StringIO) object to read through
     :return: returns the decimal number grade level of the appropriate reader
     '''
-    counter = WordStat(ExtensionCharCount, ExtensionWordCount, ExtensionSentenceCount, ExtensionSyllableCount)
+    counter = WordStat(ExtensionWordCount, ExtensionSentenceCount, ExtensionSyllableCount)
     stats = counter.analyze(fstream)
 
     words = stats['words']
@@ -282,6 +282,26 @@ def flesch_kincaid_level(fstream):
 
     # Flesch-Kincaid algorithm from http://www.readabilityformulas.com/flesch-grade-level-readability-formula.php
     result = (0.39 * words_per_sentence) + (11.8 * syllables_per_word) - 15.59
+    return result
+
+def power_sumner_kearl_level(fstream):
+    '''
+    Analyzes a text document and calculates Power-Sumner-Kearl reading level (for ages 7-10)
+    :param fstream: stream (likely File or StringIO) object to read through
+    :return: Returns decimal number grade level of appropriate reader
+    '''
+    counter = WordStat(ExtensionWordCount, ExtensionSentenceCount, ExtensionSyllableCount)
+    stats = counter.analyze(fstream)
+
+    words = stats['words']
+    sentences = stats['sentences']
+    syllables = stats['syllables']
+
+    words_per_sentence = words / sentences
+    syllables_per_word = syllables / words
+
+    # Power-Sumner-Kearl algorithm from http://www.readabilityformulas.com/powers-sumner-kear-readability-formula.php
+    result = (0.0778 * words_per_sentence) + (0.0455 * syllables_per_word) - 2.2029
     return result
 
 def merge_dicts(dicts):
@@ -309,5 +329,6 @@ if __name__ == '__main__':
                         print("Analysis of " + line)
                         print("  WordStat: %s" % counter.analyze(text, debug=False))
                         print("  Flesch-Kincaid reading level: %.2f" % flesch_kincaid_level(text))
+                        print("  Power-Sumner-Kearl reading level: %.2f" % power_sumner_kearl_level(text))
                 except (FileNotFoundError, IOError):
                     print("Failed to read " + line)

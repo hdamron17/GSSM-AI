@@ -6,3 +6,4 @@ chaouia.txt #Testing the limits
 suess.txt #"Oh, the Places You'll Go" by Dr. Suess
 trump.txt #Donald Trump inaugural speech
 beemovie.txt #Full text of the bee movie
+jefferson.txt #Deleted Passage of the Declaration of Independence
