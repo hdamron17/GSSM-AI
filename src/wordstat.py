@@ -329,6 +329,6 @@ if __name__ == '__main__':
                         print("Analysis of " + line)
                         print("  WordStat: %s" % counter.analyze(text, debug=False))
                         print("  Flesch-Kincaid reading level: %.2f" % flesch_kincaid_level(text))
-                        print("  Power-Sumner-Kearl reading level: %.2f" % power_sumner_kearl_level(text))
+                        #print("  Power-Sumner-Kearl reading level: %.2f" % power_sumner_kearl_level(text))
                 except (FileNotFoundError, IOError):
                     print("Failed to read " + line)
