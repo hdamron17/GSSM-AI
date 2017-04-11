@@ -5,7 +5,9 @@ pastafarianism.txt #Pastafarianism wiki page
 chaouia.txt #Testing the limits
 suess.txt #"Oh, the Places You'll Go" by Dr. Suess
 trump.txt #Donald Trump inaugural speech
-beemovie.txt #Full text of the bee movie
-jefferson.txt #Deleted Passage of the Declaration of Independence
+beemovie.txt #Full text of the bee movie (from Gary)
+jefferson.txt #Deleted Passage of the Declaration of Independence (from Andrew)
+jefferson-original.txt #Original draft of the Declaration of Independence (from Andrew)
 young-trump.txt #Trump before he invaded the well-being of the American people as president (from Nick)
 old-trump.txt #Trump after he invaded the well-being of the American people as president (from Nick)
+homer.txt #A long Homer poem (from Nick)

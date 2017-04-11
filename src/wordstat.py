@@ -95,7 +95,7 @@ class ExtensionWordCount(ExtensionDelimitedCount):
         super().init()
         self.key = "words"
         self.delimiter = '.!? \t\n\r\f\v'#matches line-ending punctuation and whitespace characters
-        self.misc_punctuation = '(){}<>[]$:;,/\\\'\"' #matches puntuation marks which could possibly be placed conveniently beside a delimiter but not signify a new word
+        self.misc_punctuation = '(){}<>[]$:;,/\\\'\"‘’“”' #matches puntuation marks which could possibly be placed conveniently beside a delimiter but not signify a new word
         self.punctuating = False #set to true when previous character is some sort of puntuation (so that something like "what." doesn't match two words '"what' and '"')
 
 class ExtensionSentenceCount(ExtensionDelimitedCount):
@@ -103,7 +103,7 @@ class ExtensionSentenceCount(ExtensionDelimitedCount):
         super().init()
         self.key = "sentences"
         self.delimiter = '.!?'#matches line-ending punctuation and whitespace characters
-        self.misc_punctuation = '(){}<>[]$:;,/\\\'\" \t\n\r\f\v' #matches puntuation marks which could possibly be placed conveniently beside a delimiter but not signify a new word
+        self.misc_punctuation = '(){}<>[]$:;,/\\\'\"‘’“” \t\n\r\f\v' #matches puntuation marks which could possibly be placed conveniently beside a delimiter but not signify a new word
         self.punctuating = False #set to true when previous character is some sort of puntuation (so that something like "what." doesn't match two words '"what' and '"')
 
 def merge(lists):
@@ -137,7 +137,7 @@ class ExtensionSyllableCount(Extension):
         self.vowel_y = False #becomes true when y is preceded by a vowel so if next is vowel, it is another syllable
         self.lone_e = False #becomes true when e follows a non-vowel so silent e can be detected
         self.vowel_count = 0 #counts number of non-y vowels in each word to allow specification of silent e
-        self.misc_punctuation = '(){}<>[]$:;,/\\\'\"\t\n\r\f\v' #matches puntuation marks which could possibly be placed conveniently beside a delimiter but not signify a new word
+        self.misc_punctuation = '(){}<>[]$:;,/\\\'\"‘’“”\t\n\r\f\v' #matches puntuation marks which could possibly be placed conveniently beside a delimiter but not signify a new word
         self.exceptions = [("tion", -1), ("*ble", 1), ("*sm", 1), ("thm", 1)] #adds the appropriate ammount when it finds such an exception
         #Note: * expands to any vowel
         self.exceptions = merge([self.expand_exception(exception) for exception in self.exceptions]) #expands * to all vowels
