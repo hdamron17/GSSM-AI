@@ -11,6 +11,7 @@ import re
 import os, sys
 from os.path import join as pathjoin, dirname, abspath
 import itertools
+import math
 
 
 class Extension():
@@ -59,8 +60,8 @@ class ExtensionCharCount(Extension):
     def count(self, character, debug=False):
         if character != '':
             self.total += 1
-            return True
-        return False
+            return 1
+        return 0
 
 class ExtensionDelimitedCount(Extension):
     def init(self):
@@ -74,7 +75,7 @@ class ExtensionDelimitedCount(Extension):
             if not self.punctuating:
                 # if the previous character was not punctuating, this is the end of a word
                 self.total += 1
-                return True
+                return 1
         elif self.punctuating:
             #the previous character was a punctuation character
             if character not in self.delimiter + self.misc_punctuation:
@@ -86,9 +87,9 @@ class ExtensionDelimitedCount(Extension):
             if character in self.delimiter:
                 self.total += 1
                 self.punctuating = True
-                return True
+                return 1
             # else do nothing
-        return False
+        return 0
 
 class ExtensionWordCount(ExtensionDelimitedCount):
     def init(self):
@@ -159,11 +160,13 @@ class ExtensionSyllableCount(Extension):
     def count(self, character, debug=False):
         if debug: print(character, end='') #TODO remove
 
+        prev_total = self.total #save previous total so we can return the change
+
         if character in self.misc_punctuation and character != '':
             # ignore any character that is punctuation
-            return
+            return 0
 
-        new_word = self.word_count.count(character) #pass the character on
+        new_word = self.word_count.count(character) == 1 #pass the character on
         #if new_word and debug: print("{}", end='') #TODO remove
 
         if new_word:
@@ -224,6 +227,31 @@ class ExtensionSyllableCount(Extension):
                     if debug: print('{^%s}' % exception, end='')
 
         self.prev = character if not new_word else '' #update the previous character or cast any new word to empty
+
+        return self.total - prev_total #return change in total
+
+class ExtensionLongWordCount(Extension):
+    def init(self):
+        self.key = "long_words"
+        self.long_syllables = 3 #long word if 3 or more syllables
+        self.word_count = ExtensionWordCount() #word counter
+        self.syllable_count = ExtensionSyllableCount() #syllable counter
+        self.syllables = 0 #counts syllables in word
+
+    def count(self, character, debug=False):
+        words_change = self.word_count.count(character)
+        syllables_change = self.syllable_count.count(character)
+
+        if words_change <= 0:
+            #not a new word
+            self.syllables += syllables_change
+        else:
+            if self.syllables >= self.long_syllables:
+                self.total += 1
+                self.syllables = 0
+                return 1
+            self.syllables = 0
+        return 0
 
 class WordStat():
     def __init__(self, *extensions):
@@ -304,6 +332,21 @@ def power_sumner_kearl_level(fstream):
     result = (0.0778 * words_per_sentence) + (0.0455 * syllables_per_word) - 2.2029
     return result
 
+def smog_level(fstream):
+    '''
+    #TODO calculates SMOG reading level
+    '''
+    counter = WordStat(ExtensionWordCount, ExtensionSentenceCount, ExtensionSyllableCount, ExtensionLongWordCount)
+    stat = counter.analyze(fstream)
+
+    words = stat['words']
+    sentences = stat['sentences']
+    long_words = stat['long_words']
+
+    long_words_per_30_sentece = math.sqrt(round(long_words / sentences * 30, 1000)) #long_words per 30 rounded to nearest 10
+
+    return 3 + long_words_per_30_sentece
+
 def merge_dicts(dicts):
     '''
     Merges multiple dicts into a single dict
@@ -318,7 +361,7 @@ def merge_dicts(dicts):
     return result
 
 if __name__ == '__main__':
-    counter = WordStat(ExtensionCharCount, ExtensionWordCount, ExtensionSentenceCount, ExtensionSyllableCount)
+    counter = WordStat(ExtensionCharCount, ExtensionWordCount, ExtensionSentenceCount, ExtensionSyllableCount, ExtensionLongWordCount)
     textspath = pathjoin(dirname(abspath(sys.argv[0])), "..", "texts")
     with open(pathjoin(textspath, "index.txt")) as index:
         for line in index.readlines():
@@ -329,6 +372,7 @@ if __name__ == '__main__':
                         print("Analysis of " + line)
                         print("  WordStat: %s" % counter.analyze(text, debug=False))
                         print("  Flesch-Kincaid reading level: %.2f" % flesch_kincaid_level(text))
-                        #print("  Power-Sumner-Kearl reading level: %.2f" % power_sumner_kearl_level(text))
+                        print("  Power-Sumner-Kearl reading level: %.2f" % power_sumner_kearl_level(text))
+                        print("  SMOG reading level: %.2f" % smog_level(text))
                 except (FileNotFoundError, IOError):
                     print("Failed to read " + line)
