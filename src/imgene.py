@@ -164,11 +164,11 @@ def pairings(fitnesses, num):
     return pairs
 
 def test_main():
-    im = load_img(pathjoin(PROJECT_ROOT, "images", "penguin.jpg"))
+    im = load_img(pathjoin(PROJECT_ROOT, "images", "monalisa.jpg"))
     plt.imshow(im, cmap="gray")
     #plt.show()
     
-    recreated = evolve(im, goal_fitness_per_pixel=20, pop_size=50, mutation_rate=0.005, std_dev=20, show=True, elite=True)
+    recreated = evolve(im, goal_fitness_per_pixel=5, pop_size=30, mutation_rate=0.005, std_dev=20, show=True, elite=True)
     plt.ioff()
     plt.imshow(recreated, cmap="gray", vmin=0, vmax=255)
     plt.show()
