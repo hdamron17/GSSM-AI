@@ -16,6 +16,9 @@ import sys
 import random
 import warnings
 
+from multiprocessing import Pool
+from concurrent.futures import process
+
 
 warnings.filterwarnings("ignore")
 PROJECT_ROOT =  pathjoin(dirname(abspath(sys.argv[0])), "..")
@@ -94,6 +97,17 @@ def mate_and_mutate(mom, dad, mutation_rate, std_dev=20):
     '''
     return mutate(mate(mom, dad), mutation_rate, std_dev)
 
+def partition(total, num):
+    '''
+    Partitions number into as even as possible integers (i.e. partition(20,3) => [6, 7, 7])
+    :param total: integer number to be partitioned
+    :param num: integer number of partitions
+    :return: returns list of numbers which add to total
+    '''
+    base_num = total // num #everything is greater than this
+    extra = total % num #number left over
+    return [base_num] * (num-extra) + [base_num+1] * (extra)
+
 def evolve(model_im, goal_fitness_per_pixel, pop_size=20, mutation_rate=0.01, std_dev=20, show=False, elite=True):
     '''
     Runs successive iterations of genetic algorithm until it finds an image with fitness less than the cap
@@ -117,13 +131,8 @@ def evolve(model_im, goal_fitness_per_pixel, pop_size=20, mutation_rate=0.01, st
     best = min(pop)
     generation = 1
     while best[0] > goal_fitness:
-        fitnesses = [element[0] for element in pop] #get fitness levels of each
+        pop = new_gen(model_im, pop, mutation_rate, std_dev, elite)
         
-        num = pop_size if not elite else pop_size-1
-        new_pop_items = [mate_and_mutate(pop[i][1], pop[j][1], mutation_rate, std_dev) for i,j in pairings(fitnesses, num=num)]
-        new_pop_fitnesses = [compare_img(im, model_im) for im in new_pop_items]
-        
-        pop = list(zip(new_pop_fitnesses, new_pop_items))
         best = min(pop)
         
         if elite:
@@ -145,7 +154,42 @@ def evolve(model_im, goal_fitness_per_pixel, pop_size=20, mutation_rate=0.01, st
                 print("Warning: Window failure with exception %s" % e)
 
     return best[1]
+
+def new_gen(model_im, pop, mutation_rate, std_dev, elite):
+    '''
+    Creates a new generation of the population by mate_and_mutate
+    :param model_im: model image to go toward
+    :param pop: population list (fitness, image)
+    :param mutation_rate: rate of mutation
+    :param std_dev: standard deviation for mutation
+    :param elite: if True, it keeps first item
+    '''
+    pop_size = len(pop)
+    fitnesses = [element[0] for element in pop] #get fitness levels of each
     
+    num = pop_size if not elite else pop_size-1
+    new_pop_items = [mate_and_mutate(pop[i][1], pop[j][1], mutation_rate, std_dev) for i,j in pairings(fitnesses, num=num)]
+    new_pop_fitnesses = [compare_img(im, model_im) for im in new_pop_items]
+    
+    pop = list(zip(new_pop_fitnesses, new_pop_items))
+    return pop
+
+def parallel_new_gen(model_im, mom, dad, mutation_rate, std_dev, elite, processes=4):
+    '''
+    Has same outward function as new_gen but completes the task with multiprocessing
+    
+    :param processes: number of processes to use (ideal is same number as cores)
+    '''
+    pool = Pool(processes=processes)
+    
+
+def parallel_part_gen(model_im, pop, mutation_rate, std_dev, elite):
+    '''
+    Completes a section of a new generation in parallel
+    (Uses multiprocessing.Manager manager to access the list
+    '''
+    
+
 def pairings(fitnesses, num):
     '''
     Generates index pairings of generations
