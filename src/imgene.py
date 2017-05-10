@@ -208,7 +208,7 @@ def pairings(fitnesses, num):
     return pairs
 
 def test_main():
-    im = load_img(pathjoin(PROJECT_ROOT, "images", "monalisa.jpg"))
+    im = load_img(pathjoin(PROJECT_ROOT, "images", "tiny.png"))
     plt.imshow(im, cmap="gray")
     #plt.show()
     
