@@ -18,9 +18,6 @@ import sys
 import random
 import warnings
 
-from multiprocessing import Pool
-from concurrent.futures import process
-
 
 warnings.filterwarnings("ignore")
 PROJECT_ROOT =  pathjoin(dirname(abspath(sys.argv[0])), "..")
@@ -149,7 +146,6 @@ def evolve(model_im, goal_fitness_per_pixel, pop_size=20, mutation_rate=0.01, st
             pop.insert(0, best)
         
         print("Info: Gen %s Best Fitness = %s" % (generation, best[0] / pixels))
-        generation += 1
         
         if save_freq != -1 and (generation % save_freq == 0 or generation == 1):
             fname = pathjoin(output_dir, ("%d.png" % generation))
@@ -166,6 +162,7 @@ def evolve(model_im, goal_fitness_per_pixel, pop_size=20, mutation_rate=0.01, st
                 show = False
                 plt.close('all')
                 print("Warning: Window failure with exception %s" % e)
+        generation += 1
 
     return best[1]
 
@@ -206,11 +203,11 @@ def pairings(fitnesses, num):
     return pairs
 
 def test_main():
-    im = load_img(pathjoin(PROJECT_ROOT, "images", "penguin.jpg"))
+    im = load_img(pathjoin(PROJECT_ROOT, "images", "penguin-small.jpg"))
     plt.imshow(im, cmap="gray")
     #plt.show()
     
-    recreated = evolve(im, goal_fitness_per_pixel=5, pop_size=20, mutation_rate=0.01, std_dev=20, show=False, elite=True, save_freq=10)
+    recreated = evolve(im, goal_fitness_per_pixel=1, pop_size=20, mutation_rate=0.002, std_dev=20, show=False, elite=True, save_freq=10)
     plt.ioff()
     plt.imshow(recreated, cmap="gray", vmin=0, vmax=255)
     plt.show()
