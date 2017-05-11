@@ -130,7 +130,7 @@ def evolve(model_im, goal_fitness_per_pixel, pop_size=20, mutation_rate=0.01, st
         plt.ion()
         plt.show()
     
-    best = min(pop)
+    best = min(pop, key=lambda x: x[0])
     generation = 1
     
     if save_freq != -1:
@@ -143,7 +143,7 @@ def evolve(model_im, goal_fitness_per_pixel, pop_size=20, mutation_rate=0.01, st
     while best[0] > goal_fitness:
         pop = new_gen(model_im, pop, mutation_rate, std_dev, elite)
         
-        best = min(pop)
+        best = min(pop, key=lambda x: x[0])
         
         if elite:
             pop.insert(0, best)
@@ -151,7 +151,7 @@ def evolve(model_im, goal_fitness_per_pixel, pop_size=20, mutation_rate=0.01, st
         print("Info: Gen %s Best Fitness = %s" % (generation, best[0] / pixels))
         generation += 1
         
-        if save_freq != -1 and generation % save_freq == 0:
+        if save_freq != -1 and (generation % save_freq == 0 or generation == 1):
             fname = pathjoin(output_dir, ("%d.png" % generation))
             plt.imsave(fname, best[1], cmap="gray")
         
@@ -210,7 +210,7 @@ def test_main():
     plt.imshow(im, cmap="gray")
     #plt.show()
     
-    recreated = evolve(im, goal_fitness_per_pixel=5, pop_size=30, mutation_rate=0.01, std_dev=20, show=False, elite=True, save_freq=100)
+    recreated = evolve(im, goal_fitness_per_pixel=5, pop_size=20, mutation_rate=0.01, std_dev=20, show=False, elite=True, save_freq=10)
     plt.ioff()
     plt.imshow(recreated, cmap="gray", vmin=0, vmax=255)
     plt.show()
