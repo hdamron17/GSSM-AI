@@ -10,7 +10,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 
-from os.path import join as pathjoin, abspath, dirname
+from os.path import join as pathjoin, abspath, dirname, exists
+from os import makedirs
+from shutil import rmtree
 from functools import reduce
 import sys
 import random
@@ -108,7 +110,7 @@ def partition(total, num):
     extra = total % num #number left over
     return [base_num] * (num-extra) + [base_num+1] * (extra)
 
-def evolve(model_im, goal_fitness_per_pixel, pop_size=20, mutation_rate=0.01, std_dev=20, show=False, elite=True):
+def evolve(model_im, goal_fitness_per_pixel, pop_size=20, mutation_rate=0.01, std_dev=20, show=False, elite=True, save_freq=-1):
     '''
     Runs successive iterations of genetic algorithm until it finds an image with fitness less than the cap
     :param model_im: image to emulate
@@ -130,6 +132,14 @@ def evolve(model_im, goal_fitness_per_pixel, pop_size=20, mutation_rate=0.01, st
     
     best = min(pop)
     generation = 1
+    
+    if save_freq != -1:
+        output_dir = pathjoin(PROJECT_ROOT, "output")
+        
+        if exists(output_dir):
+            rmtree(output_dir)
+        makedirs(output_dir)
+    
     while best[0] > goal_fitness:
         pop = new_gen(model_im, pop, mutation_rate, std_dev, elite)
         
@@ -140,6 +150,10 @@ def evolve(model_im, goal_fitness_per_pixel, pop_size=20, mutation_rate=0.01, st
         
         print("Info: Gen %s Best Fitness = %s" % (generation, best[0] / pixels))
         generation += 1
+        
+        if save_freq != -1 and generation % save_freq == 0:
+            fname = pathjoin(output_dir, ("%d.png" % generation))
+            plt.imsave(fname, best[1], cmap="gray")
         
         if show and len(plt.get_fignums()) > 0:
             #If window is still open, it prints
@@ -172,23 +186,7 @@ def new_gen(model_im, pop, mutation_rate, std_dev, elite):
     new_pop_fitnesses = [compare_img(im, model_im) for im in new_pop_items]
     
     pop = list(zip(new_pop_fitnesses, new_pop_items))
-    return pop
-
-def parallel_new_gen(model_im, mom, dad, mutation_rate, std_dev, elite, processes=4):
-    '''
-    Has same outward function as new_gen but completes the task with multiprocessing
-    
-    :param processes: number of processes to use (ideal is same number as cores)
-    '''
-    pool = Pool(processes=processes)
-    
-
-def parallel_part_gen(model_im, pop, mutation_rate, std_dev, elite):
-    '''
-    Completes a section of a new generation in parallel
-    (Uses multiprocessing.Manager manager to access the list
-    '''
-    
+    return pop   
 
 def pairings(fitnesses, num):
     '''
@@ -208,11 +206,11 @@ def pairings(fitnesses, num):
     return pairs
 
 def test_main():
-    im = load_img(pathjoin(PROJECT_ROOT, "images", "tiny.png"))
+    im = load_img(pathjoin(PROJECT_ROOT, "images", "penguin.jpg"))
     plt.imshow(im, cmap="gray")
     #plt.show()
     
-    recreated = evolve(im, goal_fitness_per_pixel=5, pop_size=30, mutation_rate=0.005, std_dev=20, show=True, elite=True)
+    recreated = evolve(im, goal_fitness_per_pixel=5, pop_size=30, mutation_rate=0.01, std_dev=20, show=False, elite=True, save_freq=100)
     plt.ioff()
     plt.imshow(recreated, cmap="gray", vmin=0, vmax=255)
     plt.show()
