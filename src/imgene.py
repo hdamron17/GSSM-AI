@@ -107,7 +107,7 @@ def partition(total, num):
     extra = total % num #number left over
     return [base_num] * (num-extra) + [base_num+1] * (extra)
 
-def evolve(model_im, goal_fitness_per_pixel, pop_size=20, mutation_rate=0.01, std_dev=20, show=False, elite=True, save_freq=-1):
+def evolve(model_im, goal_fitness_per_pixel, pop_size=20, mutation_rate=0.01, std_dev=20, show=False, elite=True, save_freq=-1, log=True):
     '''
     Runs successive iterations of genetic algorithm until it finds an image with fitness less than the cap
     :param model_im: image to emulate
@@ -126,6 +126,10 @@ def evolve(model_im, goal_fitness_per_pixel, pop_size=20, mutation_rate=0.01, st
         display = plt.imshow(pop[0][1], cmap="gray", vmin=0, vmax=255)
         plt.ion()
         plt.show()
+        
+    if log:
+        logfile = open(pathjoin(PROJECT_ROOT, "log.csv"), "w+")
+        logfile.write("Generation,Fitness\n")
     
     best = min(pop, key=lambda x: x[0])
     generation = 1
@@ -149,7 +153,10 @@ def evolve(model_im, goal_fitness_per_pixel, pop_size=20, mutation_rate=0.01, st
         
         if save_freq != -1 and (generation % save_freq == 0 or generation == 1):
             fname = pathjoin(output_dir, ("%d.png" % generation))
-            plt.imsave(fname, best[1], cmap="gray")
+            plt.imsave(fname, best[1], cmap="gray", vmin=0, vmax=255)
+        
+        if log:
+            logfile.write("%s,%s\n" % (generation, best[0] / pixels))
         
         if show and len(plt.get_fignums()) > 0:
             #If window is still open, it prints
@@ -163,6 +170,9 @@ def evolve(model_im, goal_fitness_per_pixel, pop_size=20, mutation_rate=0.01, st
                 plt.close('all')
                 print("Warning: Window failure with exception %s" % e)
         generation += 1
+
+    if log:
+        logfile.close()
 
     return best[1]
 
@@ -207,7 +217,7 @@ def test_main():
     plt.imshow(im, cmap="gray")
     #plt.show()
     
-    recreated = evolve(im, goal_fitness_per_pixel=1, pop_size=20, mutation_rate=0.002, std_dev=20, show=False, elite=True, save_freq=10)
+    recreated = evolve(im, goal_fitness_per_pixel=1, pop_size=20, mutation_rate=0.0002, std_dev=20, show=False, elite=True, save_freq=10, log=True)
     plt.ioff()
     plt.imshow(recreated, cmap="gray", vmin=0, vmax=255)
     plt.show()

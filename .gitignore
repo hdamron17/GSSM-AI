@@ -1,4 +1,5 @@
 output
+log.csv
 
 # Eclipse PyDev
 .project
