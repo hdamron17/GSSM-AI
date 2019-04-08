@@ -1,6 +1,9 @@
 output
 log.csv
 
+# Coala
+*.orig
+
 # Eclipse PyDev
 .project
 .pydevproject
