@@ -1,9 +1,12 @@
 .*.swp
 *.py[co]
+__pycache__/
 *.class
+bin/
 
 # Some IDE did bad things
 .project
 .classpath
 .metadata/
 .recommenders/
+.settings/
