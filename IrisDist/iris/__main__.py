@@ -1,0 +1,212 @@
+""" 
+Classifies iris flowers by dimensions using various distance algorithms
+
+Author: Hunter Damron
+Date: 2/14/17
+Class: Artificial Intelligence - 1:00 p.m. TTF
+Instructor: Elizabeth Bunn
+Honor Code: On my honor, I have neither given nor received unauthorized help on this assignment
+"""
+
+import numpy as np
+import math
+
+
+def split_data(data, proportions=(1,), random=True):
+    """ 
+    Splits data into multiple random subsets
+    :param data: 2D array to be split (each point on a row)
+    :param proportions: ratios between splits - i.e. (3,6,1) splits 30%, 60%, 10%
+    :param random: if true, it randomizes the data first
+    :return: Returns a tuple containing each split of the data in the same format
+    """
+    #note that it is split by integers so proportions are not exact. First proportion taken out first
+    np_data = np.asarray(data)
+    if random:
+        np.random.shuffle(np_data)
+
+    return _split(np_data, proportions=proportions)
+
+def categorize(categories):
+    """ 
+    Makes categorizer lambda dictionary
+    :param categories: Dictionary of {category number : tuple of category values}
+    :return: Returns a dictionary of {category number : lambda to convert to integers starting with 0}
+    """
+    lambdas = {}
+    for column, single_categories in categories.items():
+        lambdas[column] = lambda value: float(single_categories.index(value.decode("utf-8"))) if (value.decode("utf-8") in single_categories) else -1.0
+    return lambdas
+
+def read_csv(filename, input_cols=(0,1,2,3), input_dtype=float, output_categories={4: ("Iris-setosa", "Iris-versicolor", "Iris-virginica")}):
+    """ 
+    Reads from csv file into a data file
+    :param filename: String name of file to use
+    :param input_cols: tuple with column numbers for input (starting with 0)
+    :param input_dtype: data type which can be used by numpy
+    :param output_categories: dictionary with {column number : tuple of possible values}
+    :return: Returns a numpy 2D array with each point as a row (output rows are categorized to ints starting with 0 or -1 if not a category)
+    """
+    converters = categorize(output_categories)
+    datas = np.genfromtxt(filename, usecols=(input_cols + tuple(output_categories.keys())),
+            dtype=np.dtype(input_dtype), comments="#", delimiter=",", skip_header=1,
+            converters=converters) #converts csv data to numpy 2D array
+    return datas
+
+def euclidean_dist(pointA, pointB):
+    """ 
+    Euclidean distance algorithm between two points
+    :param pointA: 1D collection of numbers
+    :param pointB: another 1D collection of numbers (same length as pointA)
+    :return: Returns floating point Euclidean distance between the points
+    """
+    dist_squared = 0
+    for locA, locB in zip(pointA, pointB):
+        dist_squared += (locA - locB)**2
+    return math.sqrt(dist_squared)
+
+def manhattan_dist(pointA, pointB):
+    dist = 0
+    for locA, locB in zip(pointA, pointB):
+        dist += abs(locB - locA)
+    return dist
+
+def chebyshev_dist(pointA, pointB):
+    dist = 0
+    for locA, locB in zip(pointA, pointB):
+         dist = max(dist, abs(locB - locA))
+    return dist
+
+class categorizer():
+    def __init__(self, dist_function=euclidean_dist):
+        """ 
+        Constructor for categorizer initializes the necessary variables
+        :param dist_function: Function used to calculate distance in multidimensional space
+            (function must accept two 1D collections of the same length and calculate distance between them)
+        """
+        self.centers = {}
+        self.dist_function = dist_function
+
+    def train(self, data):
+        """ 
+        Trains the clustering algorithm with a set of data
+        :param data: 2D collection with each point as a row and the last entry of each point as the category
+        """
+        sums = {} #each item is 2-tuple with (number of items, (each dimension sum, ...) ) with key category
+        for point in data:
+            category = point[-1]
+            if category not in sums:
+                sums[category] = [ 0, [0]*(len(point)-1) ]
+
+            sums[category][0] += 1 #add one to the count
+            for i in range(len(point)-1):
+                sums[category][1][i] += point[i] #add to category within the tuple of each
+
+        for key, item in sums.items():
+            num_items = item[0]
+            sums = item[1] #tuple of dimension sums
+            self.centers[key] = [location / num_items for location in sums]
+
+    def categorize(self, point):
+        """ 
+        Categorizes the point based on previous training
+        :param point: Tuple (or list) containing all input dimensions
+        :return: Returns the classification (by number) of the data point
+        """
+        assert len(self.centers) != 0, "Algorithm must be trained first"
+        distances = {}
+        for category, center in self.centers.items():
+            distances[category] = self.dist_function(center, point)
+        categories = list(distances.keys())
+        dist_values = list(distances.values())
+        smallest_index = dist_values.index(min(dist_values))
+        return categories[smallest_index]
+
+    def category_centers(self):
+        """ 
+        Returns the centers of each category
+        :return: Returns a dictionary with {category number : point tuple}
+        """
+        return self.centers
+
+    def test(self, data, debug=False):
+        """ 
+        Tests the validity of the algorithm with a testing set
+        :param data: Testing set (2D array with each point as a row)
+        :param debug: If True, information about incorrect classifications will print
+        :return: Returns a tuple with (correct count, incorrect count)
+        """
+        correct = 0 #Counts correct classification
+        wrong = 0 #Counts incorrect classification
+        for point in data:
+            assert len(point) > 1, "Data must include at least one input and one output"
+
+            inputs = list(point)[0:-1]
+            output = point[-1]
+            classified_category = self.categorize(inputs)
+
+            if classified_category == output:
+                correct += 1
+            else:
+                if debug:
+                    print(str(inputs) + " -> %s incorrectly classified as %s" % (output, classified_category))
+                wrong += 1
+
+        return (correct, wrong)
+
+def pretty_dict(ugly_dict):
+    """ 
+    Makes a pretty string version of a dictionary
+    :param ugly_dict: any plain ol' dictionary
+    :return: Returns a pretty string rendition of the dictionary (multiline)
+    """
+    ret = "{\n"
+    for key, item in ugly_dict.items():
+        ret += "  " + str(key) + " : " + str(item) + "\n"
+    ret += "}"
+    return ret
+
+def _split(data, proportions=(1,)):
+    """ 
+    Inner recursive function of split_data
+    :param data: 2D array of data points (each row is a point)
+    :param proportions: Same proportions mechanism as split_data
+    :return: Same return mechanism as split_data
+    """
+    #Note that this does not change order so the wrapper function must randomize the data
+    if len(proportions) == 1:
+        return (data,)
+    else:
+        first_proportion = proportions[0]
+        pivot = len(data) * first_proportion // sum(proportions)
+        return (data[0:pivot], *_split(data[pivot:], proportions=proportions[1:]))
+
+def main():
+    """ 
+    Main function of script
+
+    Reads from file 'iris.csv', trains a Euclidean distance algorithm,
+        then prints the data point centers and tests the last 20% of data
+    """
+    data = read_csv("iris.csv")
+    training_set, testing_set = split_data(data, proportions=(8,2), random=True)
+
+    euclidean_trainer = categorizer()
+    euclidean_trainer.train(training_set)
+    manhattan_trainer = categorizer(dist_function=manhattan_dist)
+    manhattan_trainer.train(training_set)
+    chebyshev_trainer = categorizer(dist_function=chebyshev_dist)
+    chebyshev_trainer.train(training_set)
+
+    print("Euclidean Trained Data Set Centers: \n" + pretty_dict(euclidean_trainer.category_centers()))
+    print("Euclidean test: Correct: %s ; Incorrect: %s" % euclidean_trainer.test(testing_set))
+    print("Manhattan Trained Data Set Centers: \n" + pretty_dict(manhattan_trainer.category_centers()))
+    print("Manhattan test: Correct: %s ; Incorrect: %s" % manhattan_trainer.test(testing_set))
+    print("Chebyshev Trained Data Set Centers: \n" + pretty_dict(chebyshev_trainer.category_centers()))
+    print("Chebyshev test: Correct: %s ; Incorrect: %s" % chebyshev_trainer.test(testing_set))
+
+if __name__ == "__main__":
+    """ 
+    Calls the main function
+    """
+    main()
