@@ -1,3 +1,6 @@
 [submodule "AIFH"]
 	path = AIFH
 	url = https://github.com/jeffheaton/aifh.git
+[submodule "DavedMD"]
+	path = DavedMD
+	url = https://github.com/hdamron17/DavedMD.git
