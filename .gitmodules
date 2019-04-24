@@ -1,0 +1,3 @@
+[submodule "AIFH"]
+	path = AIFH
+	url = https://github.com/jeffheaton/aifh.git
