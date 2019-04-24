@@ -1,0 +1,9 @@
+.*.swp
+*.py[co]
+*.class
+
+# Some IDE did bad things
+.project
+.classpath
+.metadata/
+.recommenders/
