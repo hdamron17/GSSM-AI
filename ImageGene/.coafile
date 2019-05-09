@@ -1,0 +1,4 @@
+[main]
+bears = SpaceConsistencyBear,PEP8Bear
+files = src/*.py
+coala-delete-orig, use_spaces, non_interactive = True
